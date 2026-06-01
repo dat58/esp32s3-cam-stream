@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-actix-web = "4"
+actix-web = { version = "4", default-features = false, features = ["macros"] }
 actix-ws = "0.3"
-serialport = "4"
-tokio = { version = "1", features = ["sync", "macros"] }
-futures-util = "0.3"
+serialport = { version = "4", default-features = false }
+tokio = { version = "1", default-features = false, features = ["sync", "macros"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
 bytes = "1"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
 dotenvy = "0.15"
