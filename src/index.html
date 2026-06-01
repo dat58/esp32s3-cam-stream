@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ESP32-S3-CAM stream</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: #111; color: #ddd; font: 14px system-ui, sans-serif;
+    }
+    img {
+      max-width: 100vw; max-height: 85vh; background: #000;
+      border: 1px solid #333; image-rendering: auto;
+    }
+    #status { font-variant-numeric: tabular-nums; }
+    .ok { color: #6c6; } .down { color: #c66; }
+  </style>
+</head>
+<body>
+  <img id="frame" alt="waiting for stream…">
+  <div id="status">connecting…</div>
+  <script>
+    const img = document.getElementById("frame");
+    const status = document.getElementById("status");
+    let lastUrl = null;
+    let frames = 0;
+    let lastTick = performance.now();
+    let fps = 0;
+
+    function show(blob) {
+      const url = URL.createObjectURL(blob);
+      img.src = url;
+      if (lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = url;
+      frames++;
+      const now = performance.now();
+      if (now - lastTick >= 1000) {
+        fps = (frames * 1000) / (now - lastTick);
+        frames = 0;
+        lastTick = now;
+      }
+      status.textContent = `live · ${fps.toFixed(1)} fps`;
+      status.className = "ok";
+    }
+
+    function connect() {
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${proto}://${location.host}/ws`);
+      ws.binaryType = "arraybuffer";
+      ws.onopen = () => { status.textContent = "connected"; status.className = "ok"; };
+      ws.onmessage = (e) => show(new Blob([e.data], { type: "image/jpeg" }));
+      ws.onclose = () => {
+        status.textContent = "disconnected · retrying…";
+        status.className = "down";
+        setTimeout(connect, 1000);
+      };
+      ws.onerror = () => ws.close();
+    }
+
+    connect();
+  </script>
+</body>
+</html>
