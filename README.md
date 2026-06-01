@@ -12,12 +12,9 @@ length + JPEG payload).
 
 ## Requirements
 
-- **Rust** (edition 2024 — use a recent stable toolchain, 1.85+).
-- **Linux build dependencies for `serialport`:** `libudev` and `pkg-config`.
-  ```bash
-  # Debian/Ubuntu (incl. WSL2)
-  sudo apt-get install -y pkg-config libudev-dev
-  ```
+- **Rust** (edition 2024 — use a recent stable toolchain, 1.85+). No system libraries are
+  required: `serialport` is built without libudev (we open a fixed port path, never enumerate),
+  so the binary links only glibc.
 - An **ESP32-S3-CAM** flashed with the streaming firmware, connected over its UART/CH343 port
   (appears as `/dev/ttyACM0`). The board must be streaming for frames to appear.
 
@@ -45,6 +42,11 @@ cp .env.example .env
 
 ```bash
 cargo run --release
+```
+
+Or run with docker:
+```bash
+docker run -it --rm -e CAM_BAUD=4000000 --device=/dev/ttyACM0 --net=host esp32s3-cam-stream:0.1.0
 ```
 
 Then open the viewer in a browser:
