@@ -27,16 +27,23 @@ Configuration is entirely via environment variables, loaded from a `.env` file a
 cp .env.example .env
 ```
 
-| Variable    | Default          | Description |
-|-------------|------------------|-------------|
-| `CAM_PORT`  | `/dev/ttyACM0`   | UART/CH343 serial port the firmware streams over. |
-| `CAM_BAUD`  | `4000000`        | Baud rate. **Must match the flashed firmware**. |
-| `BIND_ADDR` | `0.0.0.0:8080`   | Address:port the HTTP/WebSocket server binds to. |
-| `RUST_LOG`  | `info`           | Log filter ([`tracing` EnvFilter](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html) syntax), e.g. `debug`, `esp32s3_cam_stream=debug`. |
+| Variable        | Default          | Description |
+|-----------------|------------------|-------------|
+| `CAM_TRANSPORT` | `otg`            | Physical link the firmware streams over: `otg` or `uart` (case-insensitive). |
+| `CAM_PORT`      | `/dev/ttyACM0`   | Serial device path the firmware streams over (same default for both transports). |
+| `CAM_BAUD`      | `4000000`        | Baud rate — **UART transport only; ignored over USB-OTG CDC**. Must match the flashed firmware. |
+| `BIND_ADDR`     | `0.0.0.0:8080`   | Address:port the HTTP/WebSocket server binds to. |
+| `RUST_LOG`      | `info`           | Log filter ([`tracing` EnvFilter](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html) syntax), e.g. `debug`, `esp32s3_cam_stream=debug`. |
 
-> The baud **must match the firmware**. If they disagree you'll get no frames or a flood of
-> dropped/skipped frames. There is no hardware flow control, so a baud the host can't drain shows
-> up as occasional skipped frames (the reader resyncs on the next marker) rather than corruption.
+The ESP32-S3 can stream the same JPEG format over two links: the native **USB-OTG CDC** (`otg`, the
+default — a true USB device, so it's baud-less and doesn't drop bytes) or the **CH343 UART**
+(`uart` — real serial, where the baud must match the firmware). Pick one with `CAM_TRANSPORT`,
+e.g. for UART: `CAM_TRANSPORT=uart CAM_BAUD=4000000`.
+
+> In **UART** mode the baud **must match the firmware**. If they disagree you'll get no frames or a
+> flood of dropped/skipped frames — there's no hardware flow control, so a baud the host can't
+> drain shows up as occasional skipped frames (the reader resyncs on the next marker) rather than
+> corruption. **OTG** mode has no baud to match.
 
 ## Running
 
